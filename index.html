@@ -6,6 +6,15 @@
     <title>SAFE-T | Road Safety Platform</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("service-worker.js")
+            .then(() => console.log("Service Worker Registered"))
+            .catch((error) => console.log("Service Worker Registration Failed:", error));
+        }
+      </script>
+      <link rel="manifest" href="manifest.json">
+
 </head>
 <body>
     <!-- Navbar -->
