@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Finder</title>
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        .container {
+            margin: 20px;
+        }
+        input, select, button {
+            margin: 10px 0;
+            padding: 8px;
+            width: 300px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        .info {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Route Finder</h2>
+        
+        <label for="from">From:</label>
+        <input type="text" id="from" placeholder="Enter starting location">
+        <button id="useCurrentLocation">Use Current Location</button>
+        
+        <label for="to">To:</label>
+        <input type="text" id="to" placeholder="Enter destination">
+        
+        <label for="travelMode">Travel Mode:</label>
+        <select id="travelMode">
+            <option value="driving">Car</option>
+            <option value="cycling">Bike</option>
+            <option value="walking">Walking</option>
+        </select>
+        
+        <button id="calculateRouteBtn">Calculate Route</button>
+        
+        <div class="info">
+            <div id="distance"></div>
+            <div id="time"></div>
+        </div>
+        
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet.js and Routing Machine -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        // Initialize the map centered on India
+        var map = L.map('map').setView([20, 77], 5);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var routeControl;
+        var userMarker;
+        var mode = 'driving'; // Default mode
+        var useCurrentLocation = false; // Flag to track if user clicked the button
+
+        // Function to update user's position only when button is clicked
+        function setUserLocation(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+
+            // Add marker only when "Use Current Location" is clicked
+            userMarker = L.marker([lat, lon]).addTo(map)
+                .bindPopup("Current Location")
+                .openPopup();
+
+            // Set the input field and flag
+            document.getElementById("from").value = ${lat.toFixed(4)}, ${lon.toFixed(4)};
+            useCurrentLocation = true;
+        }
+
+        // Event listener for "Use Current Location" button
+        document.getElementById("useCurrentLocation").addEventListener("click", function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(setUserLocation, function(error) {
+                    alert("Unable to fetch location. Please enter manually.");
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        });
+
+        // Function to geocode an address and return coordinates
+        function geocode(address, callback) {
+            var url = https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)};
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        callback([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+                    } else {
+                        alert("Address not found. Try a more specific address.");
+                    }
+                })
+                .catch(error => {
+                    alert("Geocoding error. Try again later.");
+                });
+        }
+
+        // Function to calculate and display the route
+        function calculateRoute(start, end) {
+            // Remove any previous route
+            if (routeControl) {
+                map.removeControl(routeControl);
+            }
+
+            // Display the route
+            routeControl = L.Routing.control({
+                waypoints: [L.latLng(start[0], start[1]), L.latLng(end[0], end[1])],
+                routeWhileDragging: true,
+                router: L.Routing.osrmv1({ profile: mode })
+            }).addTo(map);
+        }
+
+        // Travel mode selection
+        document.getElementById("travelMode").addEventListener("change", function(event) {
+            mode = event.target.value;
+        });
+
+        // Calculate route button
+        document.getElementById("calculateRouteBtn").addEventListener("click", function() {
+            var fromAddress = document.getElementById("from").value.trim();
+            var toAddress = document.getElementById("to").value.trim();
+
+            if (useCurrentLocation) {
+                // If using current location, parse it into coordinates
+                var coords = fromAddress.split(',').map(Number);
+                if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                    geocode(toAddress, function(toCoords) {
+                        calculateRoute(coords, toCoords);
+                    });
+                } else {
+                    alert("Invalid current location. Try again.");
+                }
+            } else {
+                // If not using current location, geocode normally
+                if (fromAddress && toAddress) {
+                    geocode(fromAddress, function(fromCoords) {
+                        geocode(toAddress, function(toCoords) {
+                            calculateRoute(fromCoords, toCoords);
+                        });
+                    });
+                } else {
+                    alert("Please enter both From and To locations.");
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
