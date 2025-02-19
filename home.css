@@ -917,3 +917,11 @@ select {
   font-weight: 500;
   letter-spacing: -0.01em;
 }
+
+.gender-selection {
+  margin-top: 10px;
+}
+
+.gender-selection label {
+  margin-right: 15px;
+}

@@ -6,8 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("loginForm");
   const signupForm = document.getElementById("signupForm");
 
-  const API_BASE_URL = "http://localhost:5000";
-
   // Show modals
   loginBtn.addEventListener("click", () => {
     loginModal.style.display = "block";
